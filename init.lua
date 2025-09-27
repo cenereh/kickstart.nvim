@@ -936,13 +936,10 @@ require('lazy').setup({
             },
           },
         },
-        ['codelldb'] = {
-          type = 'server',
-          port = '${port}',
-          executable = {
-            command = 'codelldb',
-            args = { '--port', '${port}' },
-          },
+        ['cppdbg'] = {
+          id = 'cppdbg',
+          type = 'executable',
+          command = '/home/Teo/cppdbg/debugAdapters/bin/OpenDebugAD7',
         },
       }
 
@@ -961,6 +958,33 @@ require('lazy').setup({
             name = 'Attach to process ID',
             processId = utils.pick_process,
             cwd = '${workspaceFolder}',
+          },
+        }
+      end
+
+      for _, language in ipairs { 'c', 'cpp' } do
+        dap.configurations[language] = {
+          {
+            name = 'Launch file',
+            type = 'cppdbg',
+            request = 'launch',
+            program = function()
+              return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+            end,
+            cwd = '${workspaceFolder}',
+            stopAtEntry = true,
+          },
+          {
+            name = 'Attach to gdbserver :1234',
+            type = 'cppdbg',
+            request = 'launch',
+            MIMode = 'gdb',
+            miDebuggerServerAddress = 'localhost:1234',
+            miDebuggerPath = '/usr/bin/gdb',
+            cwd = '${workspaceFolder}',
+            program = function()
+              return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+            end,
           },
         }
       end
