@@ -890,17 +890,27 @@ require('lazy').setup({
   },
 
   {
+    'stevearc/overseer.nvim',
+    opts = {},
+  },
+
+  {
     'mfussenegger/nvim-dap',
     dependencies = {
       'leoluz/nvim-dap-go',
+      'mxsdev/nvim-dap-vscode-js',
       'rcarriga/nvim-dap-ui',
       'nvim-neotest/nvim-nio',
     },
     config = function()
       require('dapui').setup()
       require('dap-go').setup()
+      require('dap-vscode-js').setup {
+        adapters = { 'pwa-node' },
+      }
 
       local dap, dapui = require 'dap', require 'dapui'
+      local utils = require 'dap.utils'
 
       dap.listeners.before.attach.dapui_config = function()
         dapui.open()
@@ -913,6 +923,46 @@ require('lazy').setup({
       end
       dap.listeners.before.event_exited.dapui_config = function()
         dapui.close()
+      end
+
+      dap.adapters = {
+        ['pwa-node'] = {
+          type = 'server',
+          port = '${port}',
+          executable = {
+            command = 'js-debug-adapter',
+            args = {
+              '${port}',
+            },
+          },
+        },
+        ['codelldb'] = {
+          type = 'server',
+          port = '${port}',
+          executable = {
+            command = 'codelldb',
+            args = { '--port', '${port}' },
+          },
+        },
+      }
+
+      for _, language in ipairs { 'typescript', 'javascript', 'typescriptreact' } do
+        dap.configurations[language] = {
+          {
+            type = 'pwa-node',
+            request = 'launch',
+            name = 'Launch file',
+            program = '${file}',
+            cwd = '${workspaceFolder}',
+          },
+          {
+            type = 'pwa-node',
+            request = 'attach',
+            name = 'Attach to process ID',
+            processId = utils.pick_process,
+            cwd = '${workspaceFolder}',
+          },
+        }
       end
 
       vim.keymap.set('n', '<Leader>dt', ':DapToggleBreakpoint<CR>')
@@ -1076,6 +1126,8 @@ require('lazy').setup({
     },
   },
 })
+
+require('overseer').setup()
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
