@@ -898,16 +898,19 @@ require('lazy').setup({
     'mfussenegger/nvim-dap',
     dependencies = {
       'leoluz/nvim-dap-go',
-      'mxsdev/nvim-dap-vscode-js',
       'rcarriga/nvim-dap-ui',
       'nvim-neotest/nvim-nio',
+      {
+        'williamboman/mason.nvim',
+        opts = function(_, opts)
+          opts.ensure_installed = opts.ensure_installed or {}
+          table.insert(opts.ensure_installed, 'js-debug-adapter')
+        end,
+      },
     },
     config = function()
       require('dapui').setup()
       require('dap-go').setup()
-      require('dap-vscode-js').setup {
-        adapters = { 'pwa-node' },
-      }
 
       local dap, dapui = require 'dap', require 'dapui'
       local utils = require 'dap.utils'
@@ -928,12 +931,11 @@ require('lazy').setup({
       dap.adapters = {
         ['pwa-node'] = {
           type = 'server',
+          host = '127.0.0.1',
           port = '${port}',
           executable = {
             command = 'js-debug-adapter',
-            args = {
-              '${port}',
-            },
+            args = { '${port}' },
           },
         },
         ['cppdbg'] = {
